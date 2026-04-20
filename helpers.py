@@ -36,5 +36,23 @@ def classify_pocket(g, h, pfl):
     elif n_present == 1:
         return SITE_SINGLE
 
-    else:  # n_present == 0
-        raise ValueError(f"classify_pocket called on empty pocket g={g}, h={h}")
+    elif n_present == 0:
+        return SITE_EMPTY
+        
+        
+def pf_left(pf: int) -> int:
+    """
+    Index of the protofilament immediately to the left of pf.
+    Circular wraparound: PF0 <- PF12.
+    """
+    return (pf - 1) % n_pf
+
+def pf_right(pf: int) -> int:
+    """
+    Index of the protofilament immediately to the right of pf.
+    Circular wraparound: PF12 -> PF0.
+    """
+    return (pf + 1) % n_pf
+
+def groove_is_seam(g: int) -> bool:
+    return g == 0 or g == n_pf
