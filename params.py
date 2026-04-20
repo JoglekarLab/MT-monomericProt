@@ -241,6 +241,8 @@ SITE_SINGLE   = 4   # 1 surrounding tubulin
                     
 SITE_SEAM     = -1  # Seam groove. No binding in this simulation.
 
+SITE_EMPTY    = -9  # For cases where site_single looses a tubulin, so needs to be updated. Basically, nothing can bind here, just in SITE_SINGLE, as there is no tubulin.
+
 # =============================================================
 # NUCLEOTIDE STATE CONSTANTS
 # =============================================================
