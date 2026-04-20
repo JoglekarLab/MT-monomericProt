@@ -65,8 +65,8 @@ prot_sites[n_pf, :, 0] = SITE_SEAM
 pf_len = np.full(n_pf, seed_length, dtype=np.int32) # np.full(shape, fill_value). Length in tubulin dimers. Tubulin at height h on PF p is present only if h < pf_len[p].
                                                     # MATLAB: pfLen
 
-highest_lat = np.full(n_pf, seed_length, dtype=np.int32)    # For each PF,  height of the highest subunit that is right- or left-? laterally bonded.
-                                                            # Tubulin can only dissociate from above this height.
+highest_lat = np.full(n_pf, seed_length-1, dtype=np.int32)    # For each PF,  height of the highest subunit that is right-laterally bonded.
+                                                            # Tubulin can only dissociate from at least above this height.
                                                             # MATLAB: highestFullLatMade
 
 highest_hydro = seed_length # Highest height at which ALL protofilaments are GDP-hydrolyzed. Limits the inner hydrolysis check loop.
@@ -151,20 +151,41 @@ MT_lattice[n_pf - 1, :seed_length, 1] = 2   # PF12 (seam) has two lateral bonds 
 # PROTEIN BINDING POCKET CLASSIFICATION
 # Classifies the site type of every pocket over the seed region which depends on pf_len of the current and surrounding PFs.
 
+n_bindable_sites = {
+    SITE_LATTICE:   0,
+    SITE_EDGELAT2:  0,
+    SITE_EDGELONG2: 0,
+    SITE_EDGE3:     0,
+    SITE_SINGLE:    0,
+    SITE_SEAM:      0,
+}
+
+for g in range(n_pf + 1):
+    for h in range(seed_length):
+        site = int(prot_sites[g, h, 0])
+        if site in n_bindable_sites:
+            n_bindable_sites[site] += 1
+            
+n_bound_prots_by_nuc = {
+    SITE_LATTICE:   {NUC_GTP: 0, NUC_MIXED: 0, NUC_GDP: 0},
+    SITE_EDGELAT2:  {NUC_GTP: 0, NUC_MIXED: 0, NUC_GDP: 0},
+    SITE_EDGELONG2: {NUC_GTP: 0, NUC_MIXED: 0, NUC_GDP: 0},
+    SITE_EDGE3:     {NUC_GTP: 0, NUC_MIXED: 0, NUC_GDP: 0},
+}
+            
 # A groove (g) is between right PF = g,  left PF = (g-1)
 #   Four surrounding tubulins:
 #     right_lo: right PF at height h     present if h   < pf_len[right PF]
 #     right_hi: right PF at height h+1   present if h+1 < pf_len[right PF]
 #     left_lo:  left  PF at height h     present if h   < pf_len[left  PF]
 #     left_hi:  left  PF at height h+1   present if h+1 < pf_len[left  PF]
-#
+
 # Seam grooves (g=0 and g=n_pf) are part of the seam and contain no protein.
 # Classify all pockets from height 0 to seed_length-1.
 for g in range(n_pf + 1):
     for h in range(seed_length):
         prot_sites[g, h, 0] = classify_pocket(g, h, pf_len)
-
-
+            
 # =============================================================
 # VALIDATION
 # =============================================================
@@ -176,7 +197,7 @@ def validate_initialization():
     assert np.all(pf_len == seed_length), \
         f"pf_len should all be {seed_length}, got: {pf_len}"
 
-    assert np.all(highest_lat == seed_length), \
+    assert np.all(highest_lat == seed_length-1), \
         f"highest_lat should all be {seed_length}, got: {highest_lat}"
 
     assert highest_hydro == seed_length, \
@@ -225,6 +246,8 @@ def validate_initialization():
     assert len(prot_events) == 0, "prot_events should be empty at start"
     assert len(bound_prots) == 0, "bound_prots should be empty at start"
     assert time_elapsed == 0.0,   "time_elapsed should be 0.0 at start"
+    
+    
 
     print("Initialization validation passed.")
 
